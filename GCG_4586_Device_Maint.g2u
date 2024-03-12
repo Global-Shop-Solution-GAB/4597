@@ -1,0 +1,124 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Caption("Device Maintenance")
+Gui.Form..Size(3795,5925)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form..MaxButton(False)
+Gui.Form..Sizeable(False)
+Gui.Form.lbl1.Create(Label,"Device ID",True,915,255,0,210,330,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txtDevice.Create(TextBox,"",True,1215,300,0,1140,240,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtDevice.MaxLength(10)
+Gui.Form.cmd1.Create(Button)
+Gui.Form.cmd1.Size(855,375)
+Gui.Form.cmd1.Position(210,675)
+Gui.Form.cmd1.Caption("Add")
+Gui.Form.cmd1.Event(Click,cmd1_Click)
+Gui.Form.GsGCDevice.Create(GsGridControl)
+Gui.Form.GsGCDevice.Size(2295,3720)
+Gui.Form.GsGCDevice.Position(210,1275)
+Gui.Form.GsGCDevice.Event(RowCellClick,GsGCDevice_RowCellClick)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Coded by SKC on 8/21/2017 for MicorLumen.
+'If this is installed on any other customers environment and it does not work it will have to be quoted.  We will not fix any issue for anyone other then MicroLumen
+'This program has many tables and other scripts involved.  This is the first have of the project and it has 3 maintenance programs (GCG_4586_RouterMaintenance, GCG_4586_OpCode_Maint, GCG_4586_Device_Maint), there are 4 Tables involved in this half of the project
+'(GCG_4586_OpCode, GCG_4586_Router, GCG_4586_DDMaint, GCG_4586_Device)  
+'This part will maintain the values that are in the Device/Equipment Drop down list in the Router program. 
+'This runs from a custom menu item.
+
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+v.Local.sDevice.Declare(String)
+v.Local.sPath.Declare(String)
+F.Intrinsic.String.Build("{0}\gss2.ico", v.Caller.GasDir, v.Local.sPath)
+gui.Form..Icon(v.Local.sPath)
+F.ODBC.Connection!Conx.OpenConnection(v.Ambient.PDSN, v.Ambient.PUser, v.Ambient.PPass)
+v.Local.sDevice.Set("Select * From GCG_4586_Device Order by ID")
+F.Data.DataTable.CreateFromSQL("Device", "Conx", v.Local.sDevice, True)
+F.Data.DataTable.AddColumn("Device","Delete","String")
+F.Data.DataView.Create("Device","View",22)
+Gui.Form.GsGCDevice.AddGridviewFromDataview("DeviceGrid","Device","View")
+F.Intrinsic.Control.CallSub("GridView")
+Gui.Form.GsGCDevice.MainView("DeviceGrid")
+Gui.Form..Show
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4586_Device_Maint.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_Unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.cmd1_Click.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+v.Local.sDevice.Declare(String)
+v.Local.sDevice.Set(v.Screen.Form!txtDevice.text)
+F.Data.DataTable.AddRow("Device", "Device",v.Local.sDevice)
+Gui.Form.txtDevice.Text("")
+Gui.Form.txtDevice.SetFocus
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4586_Device_Maint.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_Unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.cmd1_Click.End
+
+Program.Sub.Form_UnLoad.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+F.Data.DataTable.RemoveColumn("Device","Delete")
+F.Data.DataTable.SaveToDB("Device","Conx","GCG_4586_Device", "ID", 7)
+F.ODBC.Connection!Conx.Close
+F.Intrinsic.Control.End
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4586_Device_Maint.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.GridView.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+Gui.Form.GsGCDevice.SetGridviewProperty("DeviceGrid","Editable", False)
+gui.Form.GsGCDevice.SetColumnProperty("DeviceGrid","Delete","ReadOnly", False)
+Gui.Form.GsGCDevice.setcolumnProperty("DeviceGrid","ID","Visible", False)
+gui.Form.GsGCDevice.ColumnEdit("DeviceGrid","Delete","EditorButton", "Delete")
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4586_Device_Maint.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_Unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.GridView.End
+
+Program.Sub.GsGCDevice_RowCellClick.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+F.Intrinsic.Control.If(v.Args.Column, =, "Delete")
+	F.Data.DataTable.DeleteRow("Device",V.Args.RowIndex)
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4586_Device_Maint.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form_Unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.GsGCDevice_RowCellClick.End
