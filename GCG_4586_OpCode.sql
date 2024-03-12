@@ -1,0 +1,5 @@
+CREATE TABLE "GCG_4586_OpCode"(
+ "ID" IDENTITY DEFAULT '0',
+ "OpCode" CHAR(6),
+ "Screen" CHAR(50),
+ UNIQUE ("ID"));
