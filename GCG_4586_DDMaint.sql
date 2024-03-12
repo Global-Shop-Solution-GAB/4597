@@ -1,0 +1,6 @@
+CREATE TABLE "GCG_4586_DDMaint"(
+ "ID" IDENTITY DEFAULT '0',
+ "Router_WO" CHAR(1) NOT NULL ,
+ "Type" CHAR(10) NOT NULL ,
+ "Value" CHAR(50) NOT NULL ,
+ UNIQUE ("ID"));
