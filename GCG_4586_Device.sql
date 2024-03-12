@@ -1,0 +1,4 @@
+CREATE TABLE "GCG_4586_Device"(
+ "ID" IDENTITY DEFAULT '0',
+ "Device" CHAR(10) NOT NULL ,
+ UNIQUE ("ID"));
