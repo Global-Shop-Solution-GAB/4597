@@ -1,0 +1,115 @@
+Program.Sub.ScreenSU.Start
+Gui.frmStatus..Create
+Gui.frmStatus..Caption("Update Quote Status")
+Gui.frmStatus..Size(3855,2040)
+Gui.frmStatus..MinX(0)
+Gui.frmStatus..MinY(0)
+Gui.frmStatus..Position(0,0)
+Gui.frmStatus..BackColor(-2147483633)
+Gui.frmStatus..MousePointer(0)
+Gui.frmStatus..MaxButton(False)
+Gui.frmStatus..Sizeable(False)
+Gui.frmStatus..Event(UnLoad,frmStatus_UnLoad)
+Gui.frmStatus..MinButton(False)
+Gui.frmStatus.txtQte.Create(TextBox,"",True,1215,300,0,45,285,True,0,"Arial",8,-2147483643,1)
+Gui.frmStatus.txtQte.TabStop(True)
+Gui.frmStatus.txtQte.TabIndex(1)
+Gui.frmStatus.txtQte.Event(LostFocus,LoadScreen)
+Gui.frmStatus.cmdQte.Create(Button)
+Gui.frmStatus.cmdQte.Size(375,375)
+Gui.frmStatus.cmdQte.Position(1290,240)
+Gui.frmStatus.cmdQte.TabStop(True)
+Gui.frmStatus.cmdQte.TabIndex(2)
+Gui.frmStatus.cmdQte.Caption("^")
+Gui.frmStatus.cmdQte.Event(Click,cmdQte_Click)
+Gui.frmStatus.txtCust.Create(TextBox,"",True,2310,300,0,45,930,True,0,"Arial",8,-2147483643,1)
+Gui.frmStatus.txtCust.Locked(True)
+Gui.frmStatus.txtQteDt.Create(TextBox,"",True,1215,300,0,2415,930,True,0,"Arial",8,-2147483643,1)
+Gui.frmStatus.txtQteDt.Locked(True)
+Gui.frmStatus.cmdSave.Create(Button)
+Gui.frmStatus.cmdSave.Size(855,375)
+Gui.frmStatus.cmdSave.Position(45,1305)
+Gui.frmStatus.cmdSave.TabStop(True)
+Gui.frmStatus.cmdSave.TabIndex(3)
+Gui.frmStatus.cmdSave.Caption("Save")
+Gui.frmStatus.cmdSave.Event(Click,cmdSave_Click)
+Gui.frmStatus.lblQte.Create(Label,"Quote Number:",True,1935,255,0,45,75,True,0,"Arial",8,-2147483633,0)
+Gui.frmStatus.lblCust.Create(Label,"Customer:",True,1935,255,0,45,720,True,0,"Arial",8,-2147483633,0)
+Gui.frmStatus.lblQteDt.Create(Label,"Quote Date:",True,1005,255,0,2415,720,True,0,"Arial",8,-2147483633,0)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+	V.Local.sIcon.Declare
+	
+	F.Intrinsic.String.Build("{0}\GSS2.ico",V.Caller.GasDir,V.Local.sIcon)
+	Gui.frmStatus..Icon(V.Local.sIcon)
+	F.Intrinsic.Control.CallSub(SetAutoComplete)
+	Gui.frmStatus..Show
+Program.Sub.Main.End
+
+Program.Sub.frmStatus_UnLoad.Start
+	F.Intrinsic.Control.End
+Program.Sub.frmStatus_UnLoad.End
+
+Program.Sub.SetAutoComplete.Start
+	F.ODBC.Connection!con.OpenCompanyConnection
+	F.Data.Dictionary.CreateFromSQL("dQte","con","Select Quote_No,Quote_No From V_Quote_Header Where Quote_Type = 'S' Order By Date_Quote;")
+	Gui.frmStatus.txtQte.AddAutoCompleteItem("dQte","Dictionary")
+	F.ODBC.Connection!con.Close
+Program.Sub.SetAutoComplete.End
+
+Program.Sub.cmdQte_Click.Start
+	V.Local.sRet.Declare
+	
+	F.ODBC.Connection!con.OpenCompanyConnection
+'	F.Data.DataTable.CreateFromSQL("dtQte","con","Select Quote_No,Name_Customer,Date_Quote From V_Quote_Header A Left Join V_Customer_Master B On A.Customer = B.Customer Where Quote_Type = 'S' Order By Date_Quote;")
+'	F.Intrinsic.UI.BrowserFromDataTable("Select Quote","dtQte","Quote No*!*Customer*!*Quote Date","500*!*800*!*500",V.Local.sRet)
+	F.Intrinsic.UI.Browser("Select Quote","con","Select Quote_No,Name_Customer,Date_Quote From V_Quote_Header A Left Join V_Customer_Master B On A.Customer = B.Customer Where Quote_Type = 'S' Order By Date_Quote;","Quote No*!*Customer*!*Quote Date","500*!*800*!*500",V.Local.sRet)
+	F.ODBC.Connection!con.Close
+	F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+		F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+		F.Intrinsic.Control.CallSub(LoadScreen,"Browser",True,"Quote",V.Local.sRet(0),"Customer",V.Local.sRet(1),"Quote_Date",V.Local.sRet(2).FormatMM/DD/YYYY)
+	F.Intrinsic.Control.EndIf
+Program.Sub.cmdQte_Click.End
+
+Program.Sub.LoadScreen.Start
+	V.Local.sSQL.Declare
+	V.Local.sRet.Declare
+	V.Local.bArg.Declare
+	
+	F.Intrinsic.Variable.ArgExists("Browser",V.Local.bArg)
+	F.Intrinsic.Control.If(V.Local.bArg)
+		Gui.frmStatus.txtQte.Text(V.Args.Quote)
+		Gui.frmStatus.txtCust.Text(V.Args.Customer)
+		Gui.frmStatus.txtQteDt.Text(V.Args.Quote_Date)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Control.If(V.Screen.frmStatus!txtQte.Text,<>,"")
+			F.ODBC.Connection!con.OpenCompanyConnection
+			F.Intrinsic.String.Build("Select Name_Customer,Date_Quote From V_Quote_Header A Left Join V_Customer_Master B On A.Customer = B.Customer Where Quote_No = '{0}' Order By Date_Quote;",V.Screen.frmStatus!txtQte.Text,V.Local.sSQL)
+			F.ODBC.Connection!con.ExecuteAndReturn(V.Local.sSQL,V.Local.sRet)
+			F.ODBC.Connection!con.Close
+			F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+			Gui.frmStatus.txtCust.Text(V.Local.sRet(0))
+			Gui.frmStatus.txtQteDt.Text(V.Local.sRet(1))
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+Program.Sub.LoadScreen.End
+
+Program.Sub.cmdSave_Click.Start
+	V.Local.sSQL.Declare
+	
+	F.Intrinsic.Control.If(V.Screen.frmStatus!txtQte.Text,<>,"")
+		F.ODBC.Connection!con.OpenCompanyConnection
+		F.Intrinsic.String.Build("Select Quote_No,Record_No,Quote_Type From V_Quote_Header Where Quote_No = '{0}';",V.Screen.frmStatus!txtQte.Text,V.Local.sSQL)
+		F.Data.DataTable.CreateFromSQL("dtSave","con",V.Local.sSQL)
+		F.Data.DataTable.SetValue("dtSave",0,"Quote_Type","O")
+		F.Data.DataTable.SaveToDB("dtSave","con","Quote_Header","Quote_No*!*Record_No")
+		F.ODBC.Connection!con.Close
+		Gui.frmStatus.txtQte.Text("")
+		Gui.frmStatus.txtCust.Text("")
+		Gui.frmStatus.txtQteDt.Text("")
+	F.Intrinsic.Control.EndIf
+Program.Sub.cmdSave_Click.End
